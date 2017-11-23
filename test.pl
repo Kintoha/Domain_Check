@@ -1,7 +1,6 @@
 #!/usr/bin/perl 
 use Modern::Perl;
 use Data::Printer;
-#use utf8;
 
 say "Введите имя домена";
 my $domain_name = <STDIN>;
@@ -9,18 +8,27 @@ chomp($domain_name);
 
 my $domain_zone; # Зона домена
 my @domain_status; # Массив статусов домена
+my @domain_dns_whois; # Массив DNS серверов из whois домена
 
 # Получаем whois домена
 my $whois = `whois $domain_name` or die "Не удается запустить whois для домена $domain_name: $!";
 
-if ($domain_name =~ /.* \. (.*)/x) { $domain_zone = $1; } # Определение зоны домена
+# Получаем массив строк из whois
+my @array_line_whois = split /\n/, $whois;
+
+# Определение зоны домена
+if ($domain_name =~ /.* \. (.*)/x) { $domain_zone = $1; }
 
 if ($domain_zone eq "ru" || $domain_zone eq "su" || $domain_zone eq "рф" ) {
-	get_whois_ru();
+	my %whois_variable = get_whois_ru();
+	p %whois_variable;
 }
 elsif ($domain_zone eq "com") {
-	check_status_com();
-	print "@domain_status";
+	@domain_status = check_status_com();
+	p @domain_status;
+
+	@domain_dns_whois = chek_name_server_com();
+	p @domain_dns_whois;
 }
 
 # Статусы международных доменов:
@@ -50,14 +58,22 @@ elsif ($domain_zone eq "com") {
 
 # Функция определяет статусы международного домена
 sub check_status_com {
-
-	#if (/ .* Domain \s Status: \s (\w*) \s .* /x) { push (@domain_status, $1); }
-	#@domain_status = grep{/ .* Domain \s Status: \s (\w*) \s .* /x} split / /, $whois_output;
-
+	foreach my $line (@array_line_whois) {
+		if ($line =~ / \s* Domain \s Status: \s* (\w*) .* /x) { push(@domain_status, $1); }
+	}
 	return @domain_status;
 }
 
+sub chek_name_server_com {
+	foreach my $line (@array_line_whois) {
+		if ($line =~ / \s* Name \s Server: \s* (.+) \s* /x) { push(@domain_dns_whois, $1); }
+	}
+	return @domain_dns_whois;
+}
+
 sub get_whois_ru {
+
+	@domain_dns_whois = check_name_servers_ru();
 	my %whois_variable = (
 		exp_date => check_exp_date_ru(),
 		delegated => check_delegate_ru(),
@@ -68,7 +84,7 @@ sub get_whois_ru {
 		free_date => check_free_date_ru(),
 		person => check_person_ru(),
 		);
-	p %whois_variable;
+	return %whois_variable;
 }
 
 # Функция определяет paid-till(exp_date) для .RU/.SU/.РФ
@@ -108,3 +124,17 @@ sub check_person_ru {
 	if ($whois =~ / person: \s* (.*) .* /x) {return $1; }
 	elsif ($whois =~ / org: \s* (.*) .* /x) {return $1; }
 }
+
+sub check_name_servers_ru {
+	foreach my $line (@array_line_whois) {
+		if ($line =~ / nserver: \s* (.+) /x) {
+			push(@domain_dns_whois, $1);
+		}
+	}
+	p  @domain_dns_whois;
+	return @domain_dns_whois;
+}
+
+# Получаем dig any домена
+#my $dig_any_output = `dig $domain_name any +noall +answer` or die "Не удается запустить dig для домена $domain_name: $!";
+#say $dig_any_output;
