@@ -45,31 +45,6 @@ else {
 	p @domain_dns_whois;
 }
 
-# Статусы международных доменов:
-#addPeriod
-#autoRenewPeriod
-#inactive
-#ok
-#pendingCreate
-#pendingDelete
-#pendingRenew
-#pendingRestore
-#pendingTransfer
-#pendingUpdate
-#redemptionPeriod
-#renewPeriod
-#serverDeleteProhibited
-#serverHold
-#serverRenewProhibited
-#serverTransferProhibited
-#serverUpdateProhibited
-#transferPeriod
-#clientDeleteProhibited
-#clientHold
-#clientRenewProhibited
-#clientTransferProhibited
-#clientUpdateProhibited
-
 sub get_whois_com {
 
 	@domain_dns_whois = check_name_server_com();
@@ -94,6 +69,7 @@ sub check_status_com {
 sub check_name_server_com {
 	foreach my $line (@array_line_whois) {
 		if ($line =~ / .* Name .* Server: \s* (.+) \s* /x) { push( @domain_dns_whois, lc($1) ); }
+		if ($line =~ / nserver: \s* (.+) /x) { push( @domain_dns_whois, lc($1) ); }
 	}
 	return @domain_dns_whois;
 }
