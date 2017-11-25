@@ -11,7 +11,7 @@ my @domain_status; # Массив статусов домена
 my @domain_dns_whois; # Массив DNS серверов из whois домена
 
 # Получаем whois домена
-my $whois = `whois $domain_name` or die "Не удается запустить whois для домена $domain_name: $!";
+my $whois = `pwhois $domain_name` or die "Не удается запустить whois для домена $domain_name: $!";
 
 # Получаем массив строк из whois
 my @array_line_whois = split /\n/, $whois;
@@ -23,7 +23,7 @@ if ($domain_zone eq "ru" || $domain_zone eq "su" || $domain_zone eq "рф" ) {
 	my %whois_variable = get_whois_ru();
 	p %whois_variable;
 }
-elsif ($domain_zone eq "com") {
+else {
 	@domain_status = check_status_com();
 	p @domain_status;
 
@@ -59,14 +59,14 @@ elsif ($domain_zone eq "com") {
 # Функция определяет статусы международного домена
 sub check_status_com {
 	foreach my $line (@array_line_whois) {
-		if ($line =~ / \s* Domain \s Status: \s* (\w*) .* /x) { push(@domain_status, $1); }
+		if ($line =~ / Domain \s Status: \s* (\w+) .* /x) { push(@domain_status, $1); }
 	}
 	return @domain_status;
 }
 
 sub chek_name_server_com {
 	foreach my $line (@array_line_whois) {
-		if ($line =~ / \s* Name \s Server: \s* (.+) \s* /x) { push(@domain_dns_whois, $1); }
+		if ($line =~ / Name \s Server: \s* (.+) \s* /x) { push(@domain_dns_whois, $1); }
 	}
 	return @domain_dns_whois;
 }
@@ -170,8 +170,8 @@ pendingRenew => "Домен в процессе продления",
 pendingRestore => "Домен в процессе восстановления",
 pendingTransfer => "Домен в процессе переноса к другому регистратору",
 pendingUpdate => "Домен в процессе обновления",
-redemptionPeriod => "Домен в периуде возможного восстановления",
-renewPeriod => "Домен в периуде возможного продления",
+redemptionPeriod => "Домен в периоде возможного восстановления",
+renewPeriod => "Домен в периоде возможного продления",
 serverDeleteProhibited => "Домен запрещён к удалению реестром зоны",
 serverHold => "Домен снят с делегирования реестром зоны",
 serverRenewProhibited => "Домен запрещён к продлению реестром зоны",
@@ -191,5 +191,4 @@ sub statuses_com {
 	foreach my $status_domain (@domain_status) {
 		say $all_statuses{$status_domain};
 	}
-	return 1;
 }
