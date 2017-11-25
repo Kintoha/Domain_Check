@@ -59,14 +59,14 @@ else {
 # Функция определяет статусы международного домена
 sub check_status_com {
 	foreach my $line (@array_line_whois) {
-		if ($line =~ / Domain \s Status: \s* (\w+) .* /x) { push(@domain_status, $1); }
+		if ($line =~ / .* Status: \s* (\w+) .* /x) { push(@domain_status, $1); }
 	}
 	return @domain_status;
 }
 
 sub chek_name_server_com {
 	foreach my $line (@array_line_whois) {
-		if ($line =~ / Name \s Server: \s* (.+) \s* /x) { push(@domain_dns_whois, $1); }
+		if ($line =~ / .* Server: \s* (.+) \s* /x) { push(@domain_dns_whois, $1); }
 	}
 	return @domain_dns_whois;
 }
