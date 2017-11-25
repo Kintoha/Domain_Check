@@ -12,14 +12,23 @@ my $domain_zone; # Зона домена
 my @domain_status; # Массив статусов домена
 my @domain_dns_whois; # Массив DNS серверов из whois домена
 
-# Получаем whois домена
-my $whois = `whois $domain_name` or die "Не удается запустить whois для домена $domain_name: $!";
-
-# Получаем массив строк из whois
-my @array_line_whois = split /\n/, $whois;
 
 # Определение зоны домена
 if ($domain_name =~ /.* \. (\w+)/x) { $domain_zone = $1; }
+
+my $whois = `whois -h whois.iana.org $domain_zone` or die "Не удается запустить whois для зоны $domain_zone: $!";
+
+sub check_whois_server {
+	if ($whois =~ / .* whois: \s* (.+) \s* /x) { return $1; }
+}
+my $whois_server = check_whois_server(); # Ответсвенный за зону whois сервер
+say "Ответсвенный whois сервер - ". $whois_server;
+
+# Получаем whois для домена, с ответсвенного whois сервера
+$whois = `whois -h $whois_server $domain_name` or die "Не удается запустить whois для домена $domain_name: $!";
+
+# Получаем массив строк из whois
+my @array_line_whois = split /\n/, $whois;
 
 if ($domain_zone eq "ru" || $domain_zone eq "su" || $domain_zone eq "рф" ) {
 	my %whois_variable = get_whois_ru();
@@ -84,7 +93,7 @@ sub check_status_com {
 
 sub check_name_server_com {
 	foreach my $line (@array_line_whois) {
-		if ($line =~ / .* Name .* Server: \s* (.+) \s* /x) { push(@domain_dns_whois, $1); }
+		if ($line =~ / .* Name .* Server: \s* (.+) \s* /x) { push( @domain_dns_whois, lc($1) ); }
 	}
 	return @domain_dns_whois;
 }
@@ -210,7 +219,7 @@ sub check_person_ru {
 sub check_name_servers_ru {
 	foreach my $line (@array_line_whois) {
 		if ($line =~ / nserver: \s* (.+) /x) {
-			my @array_dns_param = split (/ /, lc($1)); # Массив содержащий ДНС сервер и его IP адреса (если есть)
+			my @array_dns_param = split ( / /, lc($1) ); # Массив содержащий ДНС сервер и его IP адреса (если есть)
 			push(@domain_dns_whois, $array_dns_param[0]);
 		}
 	}
