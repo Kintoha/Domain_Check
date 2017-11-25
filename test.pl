@@ -47,7 +47,7 @@ else {
 
 sub get_whois_com {
 
-	@domain_dns_whois = check_name_server_com();
+	@domain_dns_whois = check_name_server();
 	@domain_status = check_status_com();
 	my %whois_variable = (
 		exp_date => check_exp_date_com(),
@@ -64,14 +64,6 @@ sub check_status_com {
 		if ($line =~ / .* Status: \s* (\w+) .* /x) { push(@domain_status, $1); }
 	}
 	return @domain_status;
-}
-
-sub check_name_server_com {
-	foreach my $line (@array_line_whois) {
-		if ($line =~ / .* Name .* Server: \s* (.+) \s* /x) { push( @domain_dns_whois, lc($1) ); }
-		if ($line =~ / nserver: \s* (.+) /x) { push( @domain_dns_whois, lc($1) ); }
-	}
-	return @domain_dns_whois;
 }
 
 sub check_exp_date_com {
@@ -140,7 +132,7 @@ sub statuses_com {
 
 sub get_whois_ru {
 
-	@domain_dns_whois = check_name_servers_ru();
+	@domain_dns_whois = check_name_server();
 	my %whois_variable = (
 		exp_date => check_exp_date_ru(),
 		delegated => check_delegate_ru(),
@@ -192,10 +184,13 @@ sub check_person_ru {
 	elsif ($whois =~ / org: \s* (.*) .* /x) {return $1; }
 }
 
-sub check_name_servers_ru {
+
+# Универсальные функции:
+sub check_name_server {
 	foreach my $line (@array_line_whois) {
+		if ($line =~ / .* Name .* Server: \s* (.+) \s* /x) { push( @domain_dns_whois, lc($1) ); }
 		if ($line =~ / nserver: \s* (.+) /x) {
-			my @array_dns_param = split ( / /, lc($1) ); # Массив содержащий ДНС сервер и его IP адреса (если есть)
+			my @array_dns_param = split ( / /, lc($1) ); # Массив содержащий ДНС сервер и его IP адреса (если есть)(для .ru доменов, делегированных на свои же ДНС)
 			push(@domain_dns_whois, $array_dns_param[0]);
 		}
 	}
