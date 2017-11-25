@@ -138,3 +138,58 @@ sub check_name_servers_ru {
 # Получаем dig any домена
 #my $dig_any_output = `dig $domain_name any +noall +answer` or die "Не удается запустить dig для домена $domain_name: $!";
 #say $dig_any_output;
+
+#if ( check_delegate_com() ) { say "Домен делегирован"; }
+#else { say "Домен снят с делегирования"; }
+
+#if ( check_transfer_com() ) { say "Запрета переноса нет"; }
+#else { say "Установлен запрет переноса"; }
+
+sub check_delegate_com {
+	foreach my $status (@domain_status) {
+		if ( $status eq "clientHold" ) { return 0; }
+		elsif ( $status eq "serverHold" ) { return 0; }
+		elsif ( $status eq "inactive" ) { return 0; }
+	}
+	return 1;
+}
+
+sub check_transfer_com {
+	foreach my $status (@domain_status) {
+		if ( $status eq "clientTransferProhibited" ) { return 0; }
+		elsif ( $status eq "serverTransferProhibited" ) { return 0; }
+	}
+	return 1;
+}
+
+my %all_statuses = ( inactive => "Домен не делегирован",
+ok => "Домен не имеет каких либо блокировок или выполняемых процессов",
+pendingCreate => "Домен в процессе регистрации",
+pendingDelete => "Домен в процессе удаления",
+pendingRenew => "Домен в процессе продления",
+pendingRestore => "Домен в процессе восстановления",
+pendingTransfer => "Домен в процессе переноса к другому регистратору",
+pendingUpdate => "Домен в процессе обновления",
+redemptionPeriod => "Домен в периуде возможного восстановления",
+renewPeriod => "Домен в периуде возможного продления",
+serverDeleteProhibited => "Домен запрещён к удалению реестром зоны",
+serverHold => "Домен снят с делегирования реестром зоны",
+serverRenewProhibited => "Домен запрещён к продлению реестром зоны",
+serverTransferProhibited => "Домен запрещён к переносу реестром зоны",
+serverUpdateProhibited => "Домен запрещён к обновлению реестром зоны",
+transferPeriod => "Домен был успешно перенесён к новому регистратору и имеет льготный период при удалении",
+clientDeleteProhibited => "Домен запрещён к удалению регистратором",
+clientHold => "Домен снят с делегирования регистратором",
+clientRenewProhibited => "Домен запрещён к продлению регистратором",
+clientTransferProhibited => "Домен запрещён к переносу регистратором",
+clientUpdateProhibited  => "Домен запрещён к обновлению регистратором",
+);
+
+statuses_com();
+
+sub statuses_com {
+	foreach my $status_domain (@domain_status) {
+		say $all_statuses{$status_domain};
+	}
+	return 1;
+}
