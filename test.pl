@@ -29,7 +29,7 @@ if ($whois_server) {
 	$whois = `whois -h $whois_server $domain_name` or die "Не удается запустить whois для домена $domain_name: $!";
 }
 else {
-	# Получаем обычный whois для домена
+	# Если не получили сервер - получаем обычный whois для домена
 	$whois = `whois $domain_name` or die "Не удается запустить whois для домена $domain_name: $!";
 }
 
@@ -51,6 +51,7 @@ else {
 	p @domain_dns_whois;
 }
 
+ # Сбор информации из whois для международного домена
 sub get_whois_com {
 
 	@domain_dns_whois = check_name_server();
@@ -136,6 +137,7 @@ sub statuses_com {
 	}
 }
 
+ # Сбор информации из whois для российского домена
 sub get_whois_ru {
 
 	@domain_dns_whois = check_name_server();
