@@ -22,12 +22,18 @@ sub check_whois_server {
 	if ($whois =~ / .* whois: \s* (.+) \s* /x) { return $1; }
 }
 my $whois_server = check_whois_server(); # Ответсвенный за зону whois сервер
-say "Ответсвенный whois сервер - ". $whois_server;
+say "Ответственный whois сервер - ". $whois_server;
 
-# Получаем whois для домена, с ответсвенного whois сервера
-$whois = `whois -h $whois_server $domain_name` or die "Не удается запустить whois для домена $domain_name: $!";
+if ($whois_server) {
+	# Если получили сервер - получаем whois для домена, с этого whois сервера
+	$whois = `whois -h $whois_server $domain_name` or die "Не удается запустить whois для домена $domain_name: $!";
+}
+else {
+	# Получаем обычный whois для домена
+	$whois = `whois $domain_name` or die "Не удается запустить whois для домена $domain_name: $!";
+}
 
-# Получаем массив строк из whois
+# Получаем массив строк из whois ответа
 my @array_line_whois = split /\n/, $whois;
 
 if ($domain_zone eq "ru" || $domain_zone eq "su" || $domain_zone eq "рф" ) {
@@ -189,7 +195,7 @@ sub check_person_ru {
 sub check_name_server {
 	foreach my $line (@array_line_whois) {
 		if ($line =~ / .* Name .* Server: \s* (.+) \s* /x) { push( @domain_dns_whois, lc($1) ); }
-		if ($line =~ / nserver: \s* (.+) /x) {
+		elsif ($line =~ / nserver: \s* (.+) /x) {
 			my @array_dns_param = split ( / /, lc($1) ); # Массив содержащий ДНС сервер и его IP адреса (если есть)(для .ru доменов, делегированных на свои же ДНС)
 			push(@domain_dns_whois, $array_dns_param[0]);
 		}
@@ -198,7 +204,7 @@ sub check_name_server {
 }
 
 
-# Получаем неавторитативный dig any домена
+# Получаем неавторитативный dig any для домена
 my $dig_any_output = `dig $domain_name any +noall +answer` or die "Не удается запустить dig для домена $domain_name: $!";
 my @array_line_dig = split /\n/, $dig_any_output;
 
@@ -269,4 +275,18 @@ sub compare_DNS_whois_and_dig {
     #my @diff = array_diff(@domain_dns_whois, @domain_dns_dig);
     #say "symmetric difference:";
     #p @diff;
+}
+
+
+# ping домена
+my $ping_output = `ping $domain_name -q -c 1` or die "Не удалось получить ping для домена $domain_name: $!";
+if ($ping_output) {
+	if($ping_output =~ / .* $domain_name \s+ \( (.+) \) \s \d+ .* /x) { say "Пингуется IP - ". $1; }
+
+	if($ping_output =~ / (\d) \s packets \s transmitted .* /x) {
+		if ($1 == 1) { say "Всё ок - $1" } 
+	}
+}
+else {
+
 }
